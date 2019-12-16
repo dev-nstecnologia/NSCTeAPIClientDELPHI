@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2018/09/11 10:26:32.000.170,=C:\Users\marcelo.bastos\Documents\Embarcadero\Studio\Projects\Unit2.pas</Transaction>
+    <Transaction>2018/09/11 10:33:27.000.608,C:\Users\marcelo.bastos\Documents\Embarcadero\Studio\Projects\Unit2.dfm=C:\Users\marcelo.bastos\Desktop\Marcelo\ExemplosAPI\Exemplos Síncrono\NFeAPIClientDelphi10_1-master\principal.dfm</Transaction>
+    <Transaction>2018/09/11 10:33:27.000.608,C:\Users\marcelo.bastos\Documents\Embarcadero\Studio\Projects\Unit2.pas=C:\Users\marcelo.bastos\Desktop\Marcelo\ExemplosAPI\Exemplos Síncrono\NFeAPIClientDelphi10_1-master\principal.pas</Transaction>
+    <Transaction>2018/09/11 10:34:01.000.382,C:\Users\marcelo.bastos\Documents\Embarcadero\Studio\Projects\Project2.dproj=C:\Users\marcelo.bastos\Desktop\Marcelo\ExemplosAPI\Exemplos Síncrono\NFeAPIClientDelphi10_1-master\NFeAPIClientDelphi10_1.dproj</Transaction>
+    <Transaction>2018/09/11 10:39:48.000.167,=C:\Users\marcelo.bastos\Desktop\Marcelo\ExemplosAPI\Exemplos Síncrono\NFeAPIClientDelphi10_1-master\Unit1.pas</Transaction>
+    <Transaction>2018/09/11 10:40:07.000.618,C:\Users\marcelo.bastos\Desktop\Marcelo\ExemplosAPI\Exemplos Síncrono\NFeAPIClientDelphi10_1-master\Unit1.pas=C:\Users\marcelo.bastos\Desktop\Marcelo\ExemplosAPI\Exemplos Síncrono\NFeAPIClientDelphi10_1-master\NFeAPI.pas</Transaction>
+  </Transactions>
+</BorlandProject>
