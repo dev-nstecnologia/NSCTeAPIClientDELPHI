@@ -1,5 +1,4 @@
 # NSCTeAPIClientDELPHI
-# NSCTeAPIClientVB6
 
 Esta página apresenta trechos de códigos de um módulo em DELPHI 10 que foi desenvolvido para consumir as funcionalidades da NS CT-e API.
 
