@@ -51,6 +51,7 @@ object frmPrincipal: TfrmPrincipal
     Font.Style = []
     ParentFont = False
     TabOrder = 0
+    Text = '00000000000000'
   end
   object txtCaminhoSalvar: TEdit
     Left = 75

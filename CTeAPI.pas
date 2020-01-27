@@ -31,6 +31,11 @@ function consultarSituacao(licencaCNPJ, chCTe, tpAmb:String): String;
 function inutilizar(cUF, tpAmb, ano, CNPJ, modelo, serie, nCTIni,
  nCTFin, xJust:String): String;
 function listarNSNRecs(chCTe:String): String;
+function enviaEmailCTe(chCTe, email, enviaEmailDoc: String): String;
+function comprovanteEntregaCTe(chCTe, tpAmb, dhEvento, nProt, nSeqEvento,
+dhEntrega, nDoc, xNome, latitude, dhHashEntrega, longitude, hashEntrega,
+chavesEntregues: String): String;
+function cancelamentoCECTe(chCTe, tpAmb, dhEvento, nProt, nProtCE: String): String;
 function salvarXML(xml, caminho, chCTe: String; tpEvento: String = ''; nSeqEvento: String = ''): String;
 function salvarJSON(json, caminho, chCTe: String; tpEvento: String = ''; nSeqEvento: String = ''): String;
 function salvarPDF(pdf, caminho, chCTe: String; tpEvento: String = ''; nSeqEvento: String = ''): String;
@@ -39,12 +44,12 @@ procedure gravaLinhaLog(conteudo: String);
 implementation
 
 uses
-  System.json;
-
+    System.json, StrUtils, System.Types;
 var
+  tempoEspera: Integer = 500;
   token: String = 'SEU_TOKEN';
 
-  // Função genérica de envio para um url, contendo o token no header
+// Função genérica de envio para um url, contendo o token no header
 function enviaConteudoParaAPI(conteudoEnviar, url, tpConteudo: String): String;
 var
   retorno: String;
@@ -56,33 +61,26 @@ begin
   conteudo := TStringStream.Create(conteudoEnviar, TEncoding.UTF8);
   HTTP := TIdHTTP.Create(nil);
   try
-    if tpConteudo = 'txt' then // Informa que vai mandar um TXT
+    if tpConteudo = 'txt' then
     begin
       HTTP.Request.ContentType := 'text/plain;charset=utf-8';
     end
-    else if tpConteudo = 'xml' then // Se for XML
+    else if tpConteudo = 'xml' then
     begin
       HTTP.Request.ContentType := 'application/xml;charset=utf-8';
     end
-    else // JSON
+    else
     begin
       HTTP.Request.ContentType := 'application/json;charset=utf-8';
     end;
 
-    // Abre SSL
     IdSSLIOHandlerSocketOpenSSL1 := TIdSSLIOHandlerSocketOpenSSL.Create(nil);
     HTTP.IOHandler := IdSSLIOHandlerSocketOpenSSL1;
-
-    // Avisa o uso de UTF-8
     HTTP.Request.ContentEncoding := 'UTF-8';
-
-    // Adiciona o token ao header
     HTTP.Request.CustomHeaders.Values['X-AUTH-TOKEN'] := token;
-    // Result := conteudo.ToString;
-    // Faz o envio por POST do json para a url
+
     try
       retorno := HTTP.Post(url, conteudo);
-
     except
       on E: EIdHTTPProtocolException do
         retorno := E.ErrorMessage;
@@ -95,7 +93,6 @@ begin
     HTTP.Free();
   end;
 
-  // Devolve o json de retorno da API
   Result := retorno;
 end;
 
@@ -133,7 +130,7 @@ begin
   begin
     nsNRec := jsonRetorno.GetValue('nsNRec').Value;
 
-    sleep(500);
+    sleep(tempoEspera);
 
     resposta := consultarStatusProcessamento(CNPJ, nsNRec, tpAmb);
     jsonRetorno := TJSONObject.ParseJSONValue
@@ -327,20 +324,17 @@ begin
     0) as TJSONObject;
   status := jsonRetorno.GetValue('status').Value;
 
-  // Se o retorno da API for positivo, salva o que foi solicitado
   if status = '200' then
   begin
     if not DirectoryExists(caminho) then
       CreateDir(caminho);
 
-    // Checa se deve baixar XML
     if Pos('X', tpDown) <> 0 then
     begin
       xml := jsonRetorno.GetValue('xml').Value;
       salvarXML(xml, caminho, chCTe);
     end;
 
-    // Checa se deve baixar JSON
     if Pos('J', tpDown) <> 0 then
     begin
       if Pos('X', tpDown) = 0 then
@@ -350,7 +344,6 @@ begin
       end;
     end;
 
-    // Checa se deve baixar PDF
     if Pos('P', tpDown) <> 0 then
     begin
       pdf := jsonRetorno.GetValue('pdf').Value;
@@ -427,11 +420,9 @@ begin
     0) as TJSONObject;
   status := jsonRetorno.GetValue('status').Value;
 
-  // Se o retorno da API for positivo, salva o que foi solicitado
   if (status = '200') then
   begin
 
-    // Checa qual o tipo de evento para salvar no nome do arquivo
     if (tpEvento.ToUpper = 'CANC') then
     begin
        tpEventoSalvar := '110111';
@@ -441,14 +432,12 @@ begin
        tpEventoSalvar := '110110';
     end;
 
-    // Checa se deve baixar XML
     if Pos('X', tpDown) <> 0 then
     begin
       xml := jsonRetorno.GetValue('xml').Value;
       salvarXML(xml, caminho, chCTe, tpEventoSalvar, nSeqEvento)
     end;
 
-    // Checa se deve baixar JSON
     if Pos('J', tpDown) <> 0 then
     begin
       if Pos('X', tpDown) = 0 then
@@ -458,7 +447,6 @@ begin
       end;
     end;
 
-    // Checa se deve baixar PDF
     if Pos('P', tpDown) <> 0 then
     begin
       pdf := jsonRetorno.GetValue('pdf').Value;
@@ -477,7 +465,7 @@ begin
   Result := resposta;
 end;
 
-// Realizar o cancelamento da BP-e
+// Realizar o cancelamento da CT-e
 function cancelarCTe(chCTe, tpAmb, dhEvento, nProt, xJust, tpDown,
   caminho: String; exibeNaTela: boolean = false): String;
 var
@@ -528,7 +516,7 @@ begin
   Result := resposta;
 end;
 
-// Realizar o evento de Nao Embarque da BP-e
+// Realizar o evento de Nao Embarque da CT-e
 function corrigirCTe(chCTe, tpAmb, dhEvento, nSeqEvento, grupoAlterado, campoAlterado,
 valorAlterado, nroItemAlterado, tpDown, caminho: String; exibeNaTela: boolean = false): String;
 var
@@ -585,6 +573,7 @@ begin
   Result := resposta;
 end;
 
+// Consulta o cadastro do contribuinte de CT-e
 function consultarCadastroContribuinte(CNPJCont, UF, documentoConsulta, tpConsulta:String): String;
 var
   json: String;
@@ -612,6 +601,7 @@ begin
   Result := resposta;
 end;
 
+// Consulta situação do CT-e
 function consultarSituacao(licencaCNPJ, chCTe, tpAmb:String): String;
 var
   json: String;
@@ -639,6 +629,7 @@ begin
   Result := resposta;
 end;
 
+// Inutiliza uma numeração de CT-e
 function inutilizar(cUF, tpAmb, ano, CNPJ, modelo, serie, nCTIni,
  nCTFin, xJust:String): String;
 var
@@ -673,6 +664,7 @@ begin
   Result := resposta;
 end;
 
+// Lista nsNRecs do CT-e
 function listarNSNRecs(chCTe:String): String;
 var
   json: String;
@@ -698,30 +690,163 @@ begin
   Result := resposta;
 end;
 
+// Realiza o envio de e-mail de uma CT-e
+function enviaEmailCTe(chNFe, email, enviaEmailDoc: String): String;
+var
+  quantidade, i: Integer;
+  json: String;
+  url, resposta, respostaDownload: String;
+  status: String;
+  emails: TStringDynArray;
+  jsonRetorno: TJSONObject;
+begin
+  // Monta o Json
+  json := '{' +
+              '"chCTe": "'           + chCTe         + '",' +
+              '"enviaEmailDoc": "'   + enviaEmailDoc + '",' +
+              '"email": [';
+
+  emails := SplitString(Trim(email), ',');
+  quantidade := length(emails)-1;
+
+  for i := 0 to quantidade do
+  begin
+     if (i = quantidade) then
+     begin
+        json := json + '"' + emails[i] + '"';
+     end
+     else
+     begin
+        json := json + '"' + emails[i] + '",';
+     end;
+  end;
+
+  json := json + ']}';
+
+  url := 'https://cte.ns.eti.br/util/resendemail';
+
+  gravaLinhaLog('[ENVIO_EMAIL_DADOS]');
+  gravaLinhaLog(json);
+
+  resposta := enviaConteudoParaAPI(json, url, 'json');
+
+  gravaLinhaLog('[ENVIO_EMAIL_RESPOSTA]');
+  gravaLinhaLog(resposta);
+
+  Result := resposta;
+end;
+
+//  Realiza o comprovante de entrega de um CT-e
+function comprovanteEntregaCTe(chCTe, tpAmb, dhEvento, nProt, nSeqEvento,
+dhEntrega, nDoc, xNome, latitude, dhHashEntrega, longitude, hashEntrega,
+chavesEntregues: String): String;
+var
+  json: String;
+  url, resposta, respostaDownload: String;
+  status: String;
+  jsonRetorno: TJSONObject;
+  quantidade, i: Integer;
+  chaves: TStringDynArray;
+begin
+   if (longitude = '') and (latitude = '') then
+   begin
+     json := '{' +
+              '"latitude": "'  + latitude  + '",' +
+              '"longitude": "' + longitude + '",';
+  end;
+
+  if (chavesEntregues = '') then
+   begin
+      json := json + '"chavesEntregues": [';
+
+      chaves := SplitString(Trim(chaves), ',');
+      quantidade := length(chaves)-1;
+
+      for i := 0 to quantidade do
+      begin
+         if (i = quantidade) then
+         begin
+            json := json + '"' + chaves[i] + '"';
+         end
+         else
+         begin
+            json := json + '"' + chaves[i] + '",';
+         end;
+      end;
+
+      json := json + '],';
+  end;
+
+  json := json +
+              '"chCTe": "'         + chCTe         + '",' +
+              '"tpAmb": "'         + tpAmb         + '",' +
+              '"dhEvento": "'      + dhEvento      + '",' +
+              '"nProt": "'         + nProt         + '",' +
+              '"nSeqEvento": "'    + nSeqEvento    + '",' +
+              '"dhEntrega": "'     + dhEntrega     + '",' +
+              '"nDoc": "'          + nDoc          + '",' +
+              '"xNome": "'         + xNome         + '",' +
+              '"hashEntrega": "'   + hashEntrega   + '",' +
+              '"dhHashEntrega": "' + dhHashEntrega + '"}';
+
+  url := 'https://cte.ns.eti.br/cte/compentrega';
+
+  gravaLinhaLog ('[COMPROVANTE_ENTREGA_DADOS]');
+  gravaLinhaLog (json);
+
+  resposta := enviaConteudoParaAPI(json, url, 'json');
+
+  gravaLinhaLog('[COMPROVANTE_ENTREGA_RESPOSTA]');
+  gravaLinhaLog(resposta);
+
+  Result := resposta;
+end;
+
+// Realiza o cancelamento do comprovante de entrega de um CT-e
+function cancelamentoCECTe(chCTe, tpAmb, dhEvento, nProt, nProtCE: String): String;
+var
+  json: String;
+  url, resposta, respostaDownload: String;
+  status: String;
+  jsonRetorno: TJSONObject;
+  quantidade, i: Integer;
+  chaves: TStringDynArray;
+begin
+
+  json := '{' +
+              '"chCTe": "'    + chCTe    + '",' +
+              '"tpAmb": "'    + tpAmb    + '",' +
+              '"dhEvento": "' + dhEvento + '",' +
+              '"nProt": "'    + nProt    + '",' +
+              '"nProtCE": "'  + nProtCE  + '"}';
+
+  url := 'https://cte.ns.eti.br/cte/compentregacanc';
+
+  gravaLinhaLog ('[CANC_CE_DADOS]');
+  gravaLinhaLog (json);
+
+  resposta := enviaConteudoParaAPI(json, url, 'json');
+
+  gravaLinhaLog('[CANC_CE_RESPOSTA]');
+  gravaLinhaLog(resposta);
+
+  Result := resposta;
+end;
+
 // Função para salvar o XML de retorno
 function salvarXML(xml, caminho, chCTe: String; tpEvento: String = ''; nSeqEvento: String = ''): String;
 var
   arquivo: TextFile;
   conteudoSalvar, localParaSalvar: String;
 begin
-  // Seta o caminho para o arquivo XML
+
   localParaSalvar := caminho + tpEvento + chCTe + nSeqEvento + '-procCTe.xml';
-
-  // Associa o arquivo ao caminho
   AssignFile(arquivo, localParaSalvar);
-  // Abre para escrita o arquivo
   Rewrite(arquivo);
-
-  // Copia o retorno
   conteudoSalvar := xml;
-  // Ajeita o XML retirando as barras antes das aspas duplas
   conteudoSalvar := StringReplace(conteudoSalvar, '\"', '"',
     [rfReplaceAll, rfIgnoreCase]);
-
-  // Escreve o retorno no arquivo
   Writeln(arquivo, conteudoSalvar);
-
-  // Fecha o arquivo
   CloseFile(arquivo);
 end;
 
@@ -731,21 +856,12 @@ var
   arquivo: TextFile;
   conteudoSalvar, localParaSalvar: String;
 begin
-  // Seta o caminho para o arquivo JSON
+
   localParaSalvar := caminho + tpEvento + chCTe + nSeqEvento + '-procCTe.json';
-
-  // Associa o arquivo ao caminho
   AssignFile(arquivo, localParaSalvar);
-  // Abre para escrita o arquivo
   Rewrite(arquivo);
-
-  // Copia o retorno
   conteudoSalvar := json;
-
-  // Escreve o retorno no arquivo
   Writeln(arquivo, conteudoSalvar);
-
-  // Fecha o arquivo
   CloseFile(arquivo);
 end;
 
@@ -756,14 +872,10 @@ var
   base64decodificado: TStringStream;
   arquivo: TFileStream;
 begin
-  /// /Seta o caminho para o arquivo PDF
-  localParaSalvar := caminho + tpEvento + chCTe + nSeqEvento + '-procCTe.pdf';
 
-  // Copia e cria uma TString com o base64
+  localParaSalvar := caminho + tpEvento + chCTe + nSeqEvento + '-procCTe.pdf';
   conteudoSalvar := pdf;
   base64decodificado := TStringStream.Create(conteudoSalvar);
-
-  // Cria o arquivo .pdf e decodifica o base64 para o arquivo
   try
     arquivo := TFileStream.Create(localParaSalvar, fmCreate);
     try
@@ -782,19 +894,12 @@ var
   caminhoEXE, nomeArquivo, data: String;
   log: TextFile;
 begin
-  // Pega o caminho do executável
+
   caminhoEXE := ExtractFilePath(GetCurrentDir);
   caminhoEXE := caminhoEXE + 'log\';
-
-  // Pega a data atual
   data := DateToStr(Date);
-
-  // Ajeita o XML retirando as barras antes das aspas duplas
   data := StringReplace(data, '/', '', [rfReplaceAll, rfIgnoreCase]);
-
   nomeArquivo := caminhoEXE + data;
-
-  // Se diretório \log não existe, é criado
   if not DirectoryExists(caminhoEXE) then
     CreateDir(caminhoEXE);
 
