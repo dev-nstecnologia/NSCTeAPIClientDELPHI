@@ -8,7 +8,7 @@ uses
   IdIOHandlerStack,
   IdSSL, IdSSLOpenSSL, ShellApi, IdCoderMIME, EncdDecd;
 
-// Assinatura das funções
+// Assinatura das funÃ§Ãµes
 function enviaConteudoParaAPI(conteudoEnviar, url, tpConteudo: String): String;
 function emitirCTeSincrono(conteudo, tpConteudo, CNPJ, tpDown,
   tpAmb, modelo, caminho: String; exibeNaTela: boolean = false): String;
@@ -49,12 +49,12 @@ var
   tempoEspera: Integer = 500;
   token: String = 'SEU_TOKEN';
 
-// Função genérica de envio para um url, contendo o token no header
+// FunÃ§Ã£o genÃ©rica de envio para um url, contendo o token no header
 function enviaConteudoParaAPI(conteudoEnviar, url, tpConteudo: String): String;
 var
   retorno: String;
   conteudo: TStringStream;
-  HTTP: TIdHTTP; // Disponível na aba 'Indy Servers'
+  HTTP: TIdHTTP; // DisponÃ­vel na aba 'Indy Servers'
   IdSSLIOHandlerSocketOpenSSL1: TIdSSLIOHandlerSocketOpenSSL;
   // Disponivel na aba Indy I/O Handlers
 begin
@@ -96,7 +96,7 @@ begin
   Result := retorno;
 end;
 
-// Esta função emite uma CT-e de forma síncrona, fazendo o envio, a consulta e o download da nota
+// Esta funÃ§Ã£o emite uma CT-e de forma sÃ­ncrona, fazendo o envio, a consulta e o download da nota
 function emitirCTeSincrono(conteudo, tpConteudo, CNPJ, tpDown, tpAmb, modelo,
  caminho: String; exibeNaTela: boolean = false): String;
 var
@@ -357,7 +357,7 @@ begin
   end
   else
   begin
-    Showmessage('Ocorreu um erro, veja o Retorno da API para mais informações');
+    Showmessage('Ocorreu um erro, veja o Retorno da API para mais informaÃ§Ãµes');
   end;
 
   Result := resposta;
@@ -459,7 +459,7 @@ begin
   end
   else
   begin
-    Showmessage('Ocorreu um erro, veja o Retorno da API para mais informações');
+    Showmessage('Ocorreu um erro, veja o Retorno da API para mais informaÃ§Ãµes');
   end;
 
   Result := resposta;
@@ -526,19 +526,17 @@ var
   jsonRetorno: TJSONObject;
 begin
 
-  infCorrecao := '{' +
-              '"grupoAlterado": "'     + grupoAlterado   + '",' +
-              '"campoAlterado": "'     + campoAlterado   + '",' +
-              '"valorAlterado": "'     + valorAlterado   + '",' +
-              '"nroItemAlterado": "'   + nroItemAlterado + '"'  +
-          '}';
+  infCorrecao := '"grupoAlterado": "'     + grupoAlterado   + '",' +
+                '"campoAlterado": "'     + campoAlterado   + '",' +
+                '"valorAlterado": "'     + valorAlterado   + '",' +
+                '"nroItemAlterado": "'   + nroItemAlterado + '"';
 
   json := '{' +
             '"chCTe": "'        + chCTe       + '",' +
             '"tpAmb": "'        + tpAmb       + '",' +
             '"dhEvento": "'     + dhEvento    + '",' +
             '"nSeqEvento": "'   + nSeqEvento  + '",' +
-            '"infCorrecao": "'  + infCorrecao + '"'  +
+            '"infCorrecao": [{'  + infCorrecao + '}]'  +
           '}';
 
   url := 'https://cte.ns.eti.br/cte/cce';
@@ -601,7 +599,7 @@ begin
   Result := resposta;
 end;
 
-// Consulta situação do CT-e
+// Consulta situaÃ§Ã£o do CT-e
 function consultarSituacao(licencaCNPJ, chCTe, tpAmb:String): String;
 var
   json: String;
@@ -629,7 +627,7 @@ begin
   Result := resposta;
 end;
 
-// Inutiliza uma numeração de CT-e
+// Inutiliza uma numeraÃ§Ã£o de CT-e
 function inutilizar(cUF, tpAmb, ano, CNPJ, modelo, serie, nCTIni,
  nCTFin, xJust:String): String;
 var
@@ -833,7 +831,7 @@ begin
   Result := resposta;
 end;
 
-// Função para salvar o XML de retorno
+// FunÃ§Ã£o para salvar o XML de retorno
 function salvarXML(xml, caminho, chCTe: String; tpEvento: String = ''; nSeqEvento: String = ''): String;
 var
   arquivo: TextFile;
@@ -850,7 +848,7 @@ begin
   CloseFile(arquivo);
 end;
 
-// Função para salvar o JSON de retorno
+// FunÃ§Ã£o para salvar o JSON de retorno
 function salvarJSON(json, caminho, chCTe: String; tpEvento: String = ''; nSeqEvento: String = ''): String;
 var
   arquivo: TextFile;
@@ -865,7 +863,7 @@ begin
   CloseFile(arquivo);
 end;
 
-// Função para salvar o PDF de retorno
+// FunÃ§Ã£o para salvar o PDF de retorno
 function salvarPDF(pdf, caminho, chCTe: String; tpEvento: String = ''; nSeqEvento: String = ''): String;
 var
   conteudoSalvar, localParaSalvar: String;
@@ -908,11 +906,11 @@ begin
   Reset(log);
 {$I+}
   if (IOResult <> 0) then
-    Rewrite(log) { arquivo não existe e será criado }
+    Rewrite(log) { arquivo nÃ£o existe e serÃ¡ criado }
   else
   begin
     CloseFile(log);
-    Append(log); { o arquivo existe e será aberto para saídas adicionais }
+    Append(log); { o arquivo existe e serÃ¡ aberto para saÃ­das adicionais }
   end;
 
   Writeln(log, DateTimeToStr(Now) + ' - ' + conteudo);
